@@ -1,0 +1,58 @@
+services:
+  progress-service:
+    build:
+      context: ./progress-service
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: progress-service
+    ports:
+      - "8002:8000"
+    networks:
+      - micro-network
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/progress"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  todo-service:
+    build:
+      context: ./todo-service
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: todo-service
+    ports:
+      - "8001:8000"
+    networks:
+      - micro-network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PROGRESS_API_URL=http://progress-service:8000
+    depends_on:
+      progress-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/todos"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  micro-network:
+    driver: bridge

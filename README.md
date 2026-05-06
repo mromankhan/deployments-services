@@ -1,35 +1,39 @@
-# Microservices Project
+# Microservices Project (Gold Standard)
 
-This project contains two microservices created using `uv`.
+This project contains two microservices optimized for production with standardized ports and inter-service discovery.
 
-## 1. Todo Service
-An in-memory todo list manager.
+## Quick Start (Docker Compose)
+The recommended way to run the stack. It includes health checks and resource limits.
 
-### Run
 ```bash
-cd todo-service
-uv run main.py
+docker compose up --build
 ```
-Runs on: http://localhost:8001
-
-### Endpoints
-- `GET /todos`: Get all todos.
-- `POST /todos?task=Buy+Milk`: Create a new todo.
-- `PUT /todos/1?completed=true`: Update todo status.
-- `DELETE /todos/1`: Delete a todo.
 
 ---
 
-## 2. Progress Service
-Tracks project/task progress.
+## Service Details
 
-### Run
-```bash
-cd progress-service
-uv run main.py
-```
-Runs on: http://localhost:8002
+### 1. Todo Service
+- **External Port**: 8001
+- **Internal Port**: 8000
+- **Service URL**: http://localhost:8001
+- **Discovery**: Accesses Progress Service via `PROGRESS_API_URL`
 
-### Endpoints
-- `GET /progress`: Get current progress.
-- `POST /progress`: Update progress (Body: `{"percentage": 75.0}`).
+### 2. Progress Service
+- **External Port**: 8002
+- **Internal Port**: 8000
+- **Service URL**: http://localhost:8002
+
+---
+
+## API Documentation
+
+### Todo Endpoints
+- `GET /todos`: List all
+- `POST /todos?task=Name`: Create
+- `PUT /todos/{id}?completed=true`: Update
+- `DELETE /todos/{id}`: Delete
+
+### Progress Endpoints
+- `GET /progress`: Current status
+- `POST /progress`: Update (Body: `{"percentage": 75.0}`)
