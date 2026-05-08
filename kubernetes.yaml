@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: micro-apps
+---
+# Progress Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: progress-service
+  namespace: micro-apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: progress-service
+  template:
+    metadata:
+      labels:
+        app: progress-service
+    spec:
+      containers:
+      - name: progress-service
+        image: progress-service:latest # Assumes image is available in registry
+        imagePullPolicy: Never # For local testing (minikube/kind)
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+        livenessProbe:
+          httpGet:
+            path: /progress
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /progress
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Progress Service (Internal Networking)
+apiVersion: v1
+kind: Service
+metadata:
+  name: progress-service
+  namespace: micro-apps
+spec:
+  selector:
+    app: progress-service
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+---
+# Todo Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-service
+  namespace: micro-apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-service
+  template:
+    metadata:
+      labels:
+        app: todo-service
+    spec:
+      containers:
+      - name: todo-service
+        image: todo-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: PROGRESS_API_URL
+          value: "http://progress-service.micro-apps.svc.cluster.local:8000"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+        livenessProbe:
+          httpGet:
+            path: /todos
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /todos
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Todo Service (Internal Networking)
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-service
+  namespace: micro-apps
+spec:
+  selector:
+    app: todo-service
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000  
